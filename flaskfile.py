@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import boto3
-import pymysql
 import creds
 import os
+from sqlfunctions import *
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_secret_key')
@@ -87,25 +87,6 @@ def update_user():
     else:
         return render_template('update_user.html')
 
-def get_conn():
-    conn = pymysql.connect(
-        host=creds.host,
-        user=creds.user,
-        password=creds.password,
-        db=creds.db,
-        port=3306
-    )
-    return conn
-
-def connect_movies_db():
-    return pymysql.connect(
-        host=creds.host,
-        user=creds.user,
-        password=creds.password,
-        db=creds.db,
-        port=3306
-    )
-
 @app.route('/names', methods=['GET', 'POST'])
 def names():
     if request.method == 'POST':
@@ -138,26 +119,42 @@ def names():
 @app.route('/birthday', methods=['GET', 'POST'])
 def birthday():
     if request.method == 'POST':
-        birthday = request.form.get('birthday')
+        first_name = request.form['first_name']
 
-        movies_conn = connect_movies_db()
-        with movies_conn.cursor() as cur:
+        response = table.scan(
+            FilterExpression='#fn = :fname',
+            ExpressionAttributeNames={'#fn': 'First Name'},
+            ExpressionAttributeValues={':fname': first_name}
+        )
+        items = response.get('Items', [])
+        if not items:
+            flash(f'No user found with the first name {first_name}', 'danger')
+            return redirect(url_for('birthdays'))
+
+        birthday = items[0]['Birthday']
+
+        # Query movies with that release date
+        conn = connect_movies_db()
+        with conn.cursor() as cur:
             cur.execute("""
-                SELECT GROUP_CONCAT(DISTINCT title ORDER BY title ASC SEPARATOR ', ') AS movie_titles
-                FROM movie
-                WHERE LOWER(person_name) LIKE LOWER(%s)
-                GROUP BY person_name
-            """, (f"%{first_name}%",))  # Ensure wildcards for partial match
-            rows = cur.fetchall()
-        movies_conn.close()
+                SELECT title, release_date 
+                FROM movie 
+                WHERE release_date = %s
+            """, (birthday,))
+            movies = cur.fetchall()
+        conn.close()
 
-        print(f"Results: {rows}")  # Debug print for the query result
+        return render_template('birthday.html', 
+                               selected_name=first_name, 
+                               birthday=birthday, 
+                               movies=movies, 
+                               name_options=get_user_first_names())
 
-        if not rows:
-            flash(f'No actors found with the first name: {first_name}.', 'warning')
-        return render_template('names.html', results=rows, first_name=first_name, name_options=get_user_first_names())
-
-    return render_template('names.html', results=None, first_name=None, name_options=get_user_first_names())
+    return render_template('birthday.html', 
+                           selected_name=None, 
+                           birthday=None, 
+                           movies=None, 
+                           name_options=get_user_first_names())
 
 
 def get_user_first_names():
@@ -167,13 +164,6 @@ def get_user_first_names():
     )
     names = {item['First Name'] for item in response.get('Items', []) if 'First Name' in item}
     return sorted(names)
-
-def execute_query(query, args=()):
-    cur = get_conn().cursor()
-    cur.execute(query, args)
-    rows = cur.fetchall()
-    cur.close()
-    return rows
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
