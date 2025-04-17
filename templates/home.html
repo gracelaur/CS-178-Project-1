@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Home Page</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body  style="background-color:rgb(231, 204, 219);">
+    <!-- display a flash message here, if necessary -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="container">
+        <h1 class="mt-5">User Management System</h1>
+        <div class="mt-3">
+            <!-- Add User Button -->
+            <a href="/add-user" class="btn btn-secondary">Add User</a>
+            <a href="/delete-user" class="btn btn-secondary">Delete User</a>
+            <a href="/update-user" class="btn btn-secondary">Update User</a>
+            <a href="/display-users" class="btn btn-secondary">Display All Users</a>
+            <a href="/names" class="btn btn-secondary">Display All Matching Actor Names</a>
+            <a href="/birthday" class="btn btn-secondary">Display All Movies Released on Birthday</a>
+        </div>
+    </div>
+</body>
+</html>

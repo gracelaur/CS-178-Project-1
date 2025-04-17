@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Actors with the Same First Name</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body style="background-color:rgb(231, 204, 219);">
+    <div class="container">
+        <h2 class="mt-5">Find Actors with Your First Name</h2>
+        <form action="{{ url_for('names') }}" method="post">
+            <div class="form-group">
+                <label for="first_name">Choose a First Name:</label>
+                <select name="first_name" id="first_name" class="form-control" required>
+                    {% for name in name_options %}
+                        <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Search</button>
+        </form>
+        
+
+        {% if results is not none %}
+            <h3 class="mt-5">Results for "{{ first_name }}"</h3>
+            {% if results %}
+                <table class="table table-bordered table-striped mt-3">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Actor Name</th>
+                            <th>Movies Acted In</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                        <tr>
+                            <td>{{ row[0] }}</td>
+                            <td>
+                                <ul class="mb-0">
+                                    {% set movie_titles = row[1].split(', ') %}
+                                    {% for movie in movie_titles %}
+                                        <li>{{ movie }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="mt-3 text-danger"><strong>No actors found with that first name.</strong></p>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>

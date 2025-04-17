@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Movies Released on Birthday</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body style="background-color:rgb(231, 204, 219);">
+    <div class="container">
+        <h2 class="mt-5">Find Movies Released on the Same Day you were Born</h2>
+        <form action="{{ url_for('birthday') }}" method="post">
+            <div class="form-group">
+                <label for="first_name">Choose Your First Name:</label>
+                <select name="first_name" id="first_name" class="form-control" required>
+                    {% for name in name_options %}
+                        <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Search</button>
+        </form>
+        
+
+        {% if results is not none %}
+            <h3 class="mt-5">Results for "{{ first_name }}"</h3>
+            {% if results %}
+                <table class="table table-bordered table-striped mt-3">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Movies Released</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                        <tr>
+                            <td>{{ row[0] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="mt-3 text-danger"><strong>No movies were released on this date.</strong></p>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>
